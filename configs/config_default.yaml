@@ -1,0 +1,30 @@
+# =============== Global defaults ===============
+
+# Number of training samples (auto-scales with dim if not set in dataset config)
+n_train: 100
+n_test: 200
+
+# Sparsity: fraction of zero coefficients
+sparsity: 0.8
+coefficient_scale: 3.0
+
+# Output
+output_dir: results
+csv_filename: benchmark_results.csv
+
+# Logging
+do_cli: True
+do_tqdm: True
+
+# =============== Defaults (Hydra) ===============
+defaults:
+  - _self_
+  - dataset: independent
+  - model: ols
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .

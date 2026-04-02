@@ -1,0 +1,5 @@
+name: Elastic Net
+config:
+  cv: 5
+  max_iter: 10000
+  seed: 42

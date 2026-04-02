@@ -1,0 +1,8 @@
+name: Horseshoe
+config:
+  n_samples: 2000
+  n_tune: 1000
+  n_chains: 2
+  target_accept: 0.95
+  tau0_scale: 1.0
+  seed: 42

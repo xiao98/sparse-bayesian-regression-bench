@@ -1,0 +1,9 @@
+name: Independent Gaussian
+config:
+  dim: 50
+  n_train: 100
+  n_test: 200
+  snr: 2.0
+  sparsity: 0.8
+  coefficient_scale: 3.0
+  seed: 42
