@@ -32,6 +32,7 @@ from src.experiments.grid import (
 )
 from src.experiments.runner import run_single_experiment
 from src.visualization.plots import generate_all_plots
+from src.visualization.tables import generate_all_tables
 
 
 def parse_args():
@@ -64,6 +65,11 @@ def parse_args():
         default=os.path.join("results", "figures"),
         help="Directory for output figures.",
     )
+    parser.add_argument(
+        "--generate-tables",
+        action="store_true",
+        help="Generate LaTeX tables from results CSV.",
+    )
     return parser.parse_args()
 
 
@@ -76,6 +82,8 @@ def main():
             print(f"Error: CSV not found at {args.csv}")
             sys.exit(1)
         generate_all_plots(args.csv, figdir=args.figdir)
+        if args.generate_tables:
+            generate_all_tables(args.csv)
         return
 
     # ---- Build experiment list ----
@@ -125,8 +133,8 @@ def main():
     os.makedirs(os.path.dirname(args.csv), exist_ok=True)
     df = pd.DataFrame(results)
     df.to_csv(args.csv, index=False)
-    print(f"\n[✓] {len(results)}/{total} experiments completed in {elapsed:.1f}s")
-    print(f"[✓] Results saved to {args.csv}")
+    print(f"\n[OK] {len(results)}/{total} experiments completed in {elapsed:.1f}s")
+    print(f"[OK] Results saved to {args.csv}")
 
     # ---- Save summary table ----
     tables_dir = os.path.join("results", "tables")
@@ -134,12 +142,16 @@ def main():
     if "test_mse" in df.columns:
         summary = df.groupby("model")["test_mse"].agg(["mean", "std"]).reset_index()
         summary.to_csv(os.path.join(tables_dir, "summary_mse.csv"), index=False)
-        print(f"[✓] Summary table saved to {tables_dir}/summary_mse.csv")
+        print(f"[OK] Summary table saved to {tables_dir}/summary_mse.csv")
         print("\n--- Test MSE Summary ---")
         print(summary.to_string(index=False))
 
     # ---- Generate plots ----
     generate_all_plots(args.csv, figdir=args.figdir)
+
+    # ---- Generate LaTeX tables ----
+    if args.generate_tables:
+        generate_all_tables(args.csv)
 
 
 if __name__ == "__main__":

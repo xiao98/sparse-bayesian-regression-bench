@@ -1,0 +1,91 @@
+\section{Experimental Setup}
+\label{sec:experimental_setup}
+
+\subsection{Synthetic Data Generation}
+
+We generate data from model~\eqref{eq:linear_model} with three covariance designs for $\bX$, each drawn as $\bX \sim \Normal(\mathbf{0}, \bSigma)$.
+
+\paragraph{Independent design.}
+$\bSigma = \mathbf{I}_p$.
+Features are uncorrelated, serving as a baseline condition.
+
+\paragraph{Block-correlated design.}
+$\bSigma$ is block-diagonal with blocks of size 5.
+Within each block, off-diagonal entries equal $\rho$; diagonal entries equal 1.
+Features in different blocks are independent:
+\begin{equation}
+\Sigma_{ij} = \begin{cases}
+1 & \text{if } i = j, \\
+\rho & \text{if } i \neq j \text{ and } \lceil i/5 \rceil = \lceil j/5 \rceil, \\
+0 & \text{otherwise}.
+\end{cases}
+\end{equation}
+
+\paragraph{Toeplitz (AR-1) design.}
+$\bSigma$ has Toeplitz structure with entries $\Sigma_{ij} = \rho^{|i-j|}$, modeling exponentially decaying autocorrelation.
+This is a common model for sequentially ordered features.
+
+\paragraph{Sparse coefficient vector.}
+The true coefficient vector $\bbeta$ has sparsity level 80\%: $s = \lfloor 0.2p \rfloor$ entries are drawn i.i.d.\ from $\Normal(0, 9)$ at randomly chosen positions; the remaining entries are zero.
+
+\paragraph{Noise calibration.}
+Given a signal-to-noise ratio $\text{SNR}$, the noise standard deviation is calibrated as $\sigma = \sqrt{\Var(\bX \bbeta) / \text{SNR}}$, ensuring a consistent difficulty level across different coefficient realizations.
+
+\paragraph{Train/test split.}
+Training set size is $n_{\text{train}} = \max(50, \lfloor 1.5p \rfloor)$; test set size is $n_{\text{test}} = 200$.
+
+\subsection{Real Dataset}
+
+We include the Diabetes dataset \citep{efron2004least} ($n = 442$, $p = 10$) as a real-data validation.
+Features and targets are standardized to zero mean and unit variance.
+We use an 80/20 train/test split.
+Since the true $\bbeta$ is unknown, only prediction metrics (MSE, RMSE) and computational cost are evaluated.
+
+\subsection{Experimental Grid}
+
+Table~\ref{tab:grid} summarizes the experimental axes.
+For the independent design, $\rho$ is fixed at 0.
+The full Cartesian product yields thousands of synthetic experiments, each repeated with 5 random seeds for stability assessment.
+
+\begin{table}[h]
+\centering
+\caption{Experimental grid axes.}
+\label{tab:grid}
+\begin{tabular}{ll}
+\toprule
+Axis & Values \\
+\midrule
+Dataset & Independent, Block Correlated, Toeplitz \\
+Model & OLS, Ridge, Lasso, Elastic Net, Horseshoe, Spike-and-Slab \\
+Correlation ($\rho$) & 0.0, 0.3, 0.6, 0.9 \\
+Signal-to-noise ratio & 0.5, 1.0, 2.0, 5.0 \\
+Dimensionality ($p$) & 20, 50, 100 \\
+Random seeds & 42, 123, 456, 789, 1024 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Evaluation Metrics}
+
+We evaluate four aspects of performance:
+
+\paragraph{Prediction accuracy.}
+\emph{Test MSE} $= \frac{1}{n_{\text{test}}} \sum_{i=1}^{n_{\text{test}}} (y_i - \hat{y}_i)^2$ and \emph{Test RMSE} $= \sqrt{\text{MSE}}$.
+
+\paragraph{Coefficient estimation.}
+\emph{$L_2$ error} $= \|\hat{\bbeta} - \bbeta^*\|_2$ and \emph{Coefficient MSE} $= \frac{1}{p}\|\hat{\bbeta} - \bbeta^*\|_2^2$, where $\bbeta^*$ is the true coefficient vector.
+
+\paragraph{Variable selection.}
+We define the estimated support as $\hat{S} = \{j : |\hat{\beta}_j| > 0.01\}$ and compute \emph{precision} $= |\hat{S} \cap S| / |\hat{S}|$, \emph{recall} $= |\hat{S} \cap S| / |S|$, and their harmonic mean \emph{$F_1$}.
+
+\paragraph{Uncertainty quantification} (Bayesian methods only).
+\emph{Coverage} is the fraction of true coefficients falling inside the 95\% HDI: $\text{Coverage} = \frac{1}{p} \sum_j \mathbf{1}[\beta_j^* \in \text{HDI}_j]$.
+\emph{Average interval width} measures the sharpness of intervals: narrower intervals at the same coverage indicate a more informative posterior.
+
+\subsection{Implementation Details}
+
+Classical methods are implemented with scikit-learn \citep{pedregosa2011scikit}: \texttt{LinearRegression} (OLS), \texttt{LassoCV}, \texttt{RidgeCV}, and \texttt{ElasticNetCV}, all without intercept since data are centered.
+Bayesian methods use PyMC~5 \citep{abril2023pymc} with the NUTS sampler.
+All models are fit without intercept to match the data-generating process.
+Experiments are orchestrated by a Python runner with deterministic seeding via NumPy and PyMC random state control.
+All results are persisted to CSV for reproducible post-hoc analysis and figure generation.

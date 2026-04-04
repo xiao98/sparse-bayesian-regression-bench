@@ -1,0 +1,37 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Sparse linear regression---recovering a small set of relevant predictors from a potentially large feature space---is a cornerstone of modern statistics and machine learning.
+Applications span genomics \citep{tibshirani1996regression}, signal processing, economics, and scientific discovery, where identifying the true support of the coefficient vector $\bbeta$ is often as important as prediction accuracy.
+
+\paragraph{The practitioner's dilemma.}
+Two broad families of methods compete for this task.
+Classical penalized estimators---Lasso \citep{tibshirani1996regression}, Ridge \citep{hoerl1970ridge}, and Elastic Net \citep{zou2005regularization}---solve convex optimization problems and scale effortlessly to large datasets, but they provide only point estimates with no principled uncertainty quantification.
+Bayesian sparse priors---notably the Horseshoe \citep{carvalho2010horseshoe} and Spike-and-Slab \citep{mitchell1988bayesian}---yield full posterior distributions over coefficients, enabling credible intervals and probabilistic variable selection, but require Markov chain Monte Carlo (MCMC) sampling that is orders of magnitude slower.
+
+\paragraph{The gap.}
+Despite extensive individual studies of each method, the literature lacks a \emph{systematic, multi-axis} comparison that simultaneously varies:
+\begin{enumerate}[nosep]
+    \item \textbf{Correlation structure} among features (independent, block-diagonal, autoregressive),
+    \item \textbf{Signal strength} (signal-to-noise ratio from very weak to strong),
+    \item \textbf{Dimensionality} (from moderate to moderately high), and
+    \item \textbf{Evaluation criteria} (prediction, estimation, selection, and calibration).
+\end{enumerate}
+Existing benchmarks typically fix one or two of these axes and focus on a subset of methods, making it difficult for practitioners to choose the right tool for their specific setting.
+
+\paragraph{Contributions.}
+This paper presents a reproducible benchmark addressing this gap. Our contributions are:
+\begin{enumerate}[nosep]
+    \item A \textbf{benchmark suite} comparing six methods (OLS, Ridge, Lasso, Elastic Net, Horseshoe, Spike-and-Slab) across three synthetic covariance designs, four SNR levels, three dimensionalities, and one real dataset, totalling thousands of experiments.
+    \item \textbf{Empirical findings} on how each method's prediction accuracy, coefficient estimation, and variable selection degrade under increasing correlation and decreasing signal strength.
+    \item A \textbf{calibration analysis} of Bayesian posterior intervals, evaluating whether nominal 95\% credible intervals achieve their advertised coverage.
+    \item \textbf{Fully reproducible code}\footnote{\url{https://github.com/xiao98/sparse-bayesian-regression-bench}} with deterministic seeding, CSV-based result persistence, and automated figure and table generation.
+\end{enumerate}
+
+\paragraph{Paper outline.}
+Section~\ref{sec:related_work} reviews related work.
+Section~\ref{sec:methods} describes the six methods.
+Section~\ref{sec:experimental_setup} details the experimental design.
+Section~\ref{sec:results} presents results.
+Section~\ref{sec:discussion} discusses practical implications and limitations.
+Section~\ref{sec:conclusion} concludes.

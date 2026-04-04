@@ -1,0 +1,160 @@
+\section{Results}
+\label{sec:results}
+
+We organize our findings around five research questions: prediction accuracy, robustness to correlation, variable selection, uncertainty quantification, and computational cost.
+All reported values are means $\pm$ standard deviations across five random seeds unless otherwise noted.
+
+% ------------------------------------------------------------------
+\subsection{Overall Prediction Accuracy}
+\label{sec:results_prediction}
+
+Table~\ref{tab:grand_summary} presents the aggregate performance of each method across all synthetic conditions.
+
+\begin{table}[ht]
+\centering
+\caption{Grand summary of method performance across all synthetic experiments. Best values per metric are in bold.}
+\label{tab:grand_summary}
+\input{tables/grand_summary}
+\end{table}
+
+Figure~\ref{fig:mse_vs_snr} shows how test MSE varies with signal strength across the three covariance designs.
+All methods improve with increasing SNR, but the rate of improvement varies.
+Regularized methods (Lasso, Elastic Net, Ridge) consistently outperform OLS, with the gap widening under weak signals (SNR $\leq 1$).
+Bayesian methods perform comparably to Elastic Net at high SNR and show advantages at low SNR due to adaptive shrinkage.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figures/lineplot_mse_vs_snr_by_dataset.pdf}
+\caption{Test MSE vs.\ signal-to-noise ratio for each covariance design. Error bars show $\pm 1$ standard deviation across seeds.}
+\label{fig:mse_vs_snr}
+\end{figure}
+
+% ------------------------------------------------------------------
+\subsection{Robustness to Feature Correlation}
+\label{sec:results_correlation}
+
+Figure~\ref{fig:mse_vs_corr} reveals how prediction accuracy degrades as correlation strength $\rho$ increases.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figures/lineplot_mse_vs_correlation.pdf}
+\caption{Test MSE degradation with increasing feature correlation. Left: Block Correlated design. Right: Toeplitz design.}
+\label{fig:mse_vs_corr}
+\end{figure}
+
+Under the Block Correlated design, OLS degrades most rapidly, while Ridge and Elastic Net maintain relatively stable performance due to their $\ell_2$ component.
+Lasso's performance deteriorates at $\rho \geq 0.6$ as correlated features disrupt its variable selection.
+The Horseshoe prior shows the most graceful degradation, benefiting from its adaptive local-global shrinkage structure.
+
+The Toeplitz design produces a similar pattern but with generally smoother degradation due to the gradual decay of correlations.
+
+Figure~\ref{fig:mse_heatmap} provides a complementary view as a heatmap.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/heatmap_mse_vs_correlation.pdf}
+\caption{Average test MSE heatmap by model and correlation strength.}
+\label{fig:mse_heatmap}
+\end{figure}
+
+% ------------------------------------------------------------------
+\subsection{Variable Selection}
+\label{sec:results_selection}
+
+Figure~\ref{fig:f1_vs_snr} shows variable selection $F_1$ score as a function of SNR.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/lineplot_f1_vs_snr.pdf}
+\caption{Support recovery $F_1$ score vs.\ SNR. Higher is better.}
+\label{fig:f1_vs_snr}
+\end{figure}
+
+At low SNR ($\leq 1$), all methods struggle with variable selection ($F_1 < 0.5$).
+As signal strength increases, Lasso, Elastic Net, and the Bayesian methods rapidly improve.
+OLS and Ridge achieve high recall but low precision, as they assign nonzero values to nearly all coefficients.
+
+Figure~\ref{fig:l2_heatmap} shows how coefficient estimation error scales with dimensionality.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.65\textwidth]{figures/heatmap_l2_vs_dim.pdf}
+\caption{Coefficient $L_2$ error by model and dimensionality.}
+\label{fig:l2_heatmap}
+\end{figure}
+
+All methods show increasing $L_2$ error with dimensionality, but sparse methods (Lasso, Horseshoe) scale more favorably than non-sparse ones (OLS, Ridge).
+
+% ------------------------------------------------------------------
+\subsection{Uncertainty Quantification}
+\label{sec:results_uq}
+
+A key advantage of Bayesian methods is posterior uncertainty quantification.
+When Bayesian models (Horseshoe, Spike-and-Slab) are included in the benchmark, we evaluate 95\% HDI coverage and interval width.
+
+\IfFileExists{figures/barchart_coverage.pdf}{%
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{figures/barchart_coverage.pdf}
+\caption{Empirical 95\% posterior interval coverage. The dashed red line marks the nominal 95\% level.}
+\label{fig:coverage}
+\end{figure}
+
+The Horseshoe prior tends to produce well-calibrated intervals with coverage close to 95\%.
+The Spike-and-Slab, by contrast, sometimes exhibits higher coverage due to wider intervals---a consequence of the bimodal spike-slab mixture spreading posterior mass.
+}{}
+
+\begin{table}[ht]
+\centering
+\caption{Bayesian uncertainty quantification: coverage and interval width.}
+\label{tab:bayesian_uq}
+\input{tables/bayesian_uq}
+\end{table}
+
+% ------------------------------------------------------------------
+\subsection{Computational Cost}
+\label{sec:results_runtime}
+
+Figure~\ref{fig:runtime} compares the average fitting time across methods.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/barchart_runtime.pdf}
+\caption{Mean fitting time per experiment (log scale).}
+\label{fig:runtime}
+\end{figure}
+
+Classical methods (OLS, Ridge, Lasso, Elastic Net) fit in under one second even at $p = 100$.
+Bayesian methods require 10--100$\times$ more time due to MCMC sampling, with cost scaling superlinearly with dimensionality.
+
+% ------------------------------------------------------------------
+\subsection{Seed Stability}
+\label{sec:results_stability}
+
+Figure~\ref{fig:seed_stability} shows the distribution of test MSE across the five random seeds.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/boxplot_seed_stability.pdf}
+\caption{Test MSE distribution across random seeds. Wider boxes indicate higher variability.}
+\label{fig:seed_stability}
+\end{figure}
+
+Classical methods exhibit low seed-to-seed variability due to deterministic optimization (given fixed data).
+Bayesian methods show moderately higher variability from MCMC stochasticity, though this is mitigated by using 2{,}000 posterior draws.
+
+% ------------------------------------------------------------------
+\subsection{Real Data: Diabetes}
+\label{sec:results_diabetes}
+
+Table~\ref{tab:diabetes} reports results on the Diabetes dataset.
+
+\begin{table}[ht]
+\centering
+\caption{Results on the Diabetes dataset ($n=442$, $p=10$).}
+\label{tab:diabetes}
+\input{tables/diabetes}
+\end{table}
+
+With only 10 features and a moderate sample size, differences among methods are smaller than in synthetic settings.
+Regularized methods slightly outperform OLS, while Bayesian methods achieve comparable prediction accuracy at higher computational cost.

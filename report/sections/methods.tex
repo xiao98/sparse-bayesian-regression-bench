@@ -1,0 +1,88 @@
+\section{Methods}
+\label{sec:methods}
+
+We consider the standard linear regression model
+\begin{equation}
+\label{eq:linear_model}
+\by = \bX \bbeta + \beps, \qquad \beps \sim \Normal(\mathbf{0}, \sigma^2 \mathbf{I}_n),
+\end{equation}
+where $\bX \in \R^{n \times p}$ is the design matrix, $\bbeta \in \R^p$ is the coefficient vector, and $\sigma^2$ is the noise variance.
+We assume $\bbeta$ is \emph{sparse}: only $s \ll p$ entries are nonzero.
+The goal is to estimate $\bbeta$, predict on held-out data, and recover the support $S = \{j : \beta_j \neq 0\}$.
+
+Below we describe the six methods included in our benchmark, grouped into classical penalized estimators and Bayesian approaches.
+
+% ------------------------------------------------------------------
+\subsection{Classical Penalized Methods}
+% ------------------------------------------------------------------
+
+\subsubsection{Ordinary Least Squares (OLS)}
+
+OLS minimizes the unpenalized squared loss:
+\begin{equation}
+\hat{\bbeta}_{\text{OLS}} = \arg\min_{\bbeta} \frac{1}{2n} \|\by - \bX \bbeta\|_2^2 = (\bX^\top \bX)^{-1} \bX^\top \by.
+\end{equation}
+OLS serves as an unregularized baseline.
+It is consistent when $n > p$ but does not perform variable selection and is undefined when $p > n$.
+
+\subsubsection{Ridge Regression}
+
+Ridge regression \citep{hoerl1970ridge} adds an $\ell_2$ penalty:
+\begin{equation}
+\hat{\bbeta}_{\text{Ridge}} = \arg\min_{\bbeta} \frac{1}{2n} \|\by - \bX \bbeta\|_2^2 + \lambda \|\bbeta\|_2^2.
+\end{equation}
+The penalty shrinks coefficients toward zero but does not set any exactly to zero.
+From a Bayesian perspective, this corresponds to a Gaussian prior $\beta_j \sim \Normal(0, 1/(2\lambda))$.
+The regularization parameter $\lambda$ is selected by leave-one-out cross-validation over a grid of 50 logarithmically spaced values in $[10^{-4}, 10^{4}]$.
+
+\subsubsection{Lasso}
+
+The Lasso \citep{tibshirani1996regression} uses an $\ell_1$ penalty:
+\begin{equation}
+\hat{\bbeta}_{\text{Lasso}} = \arg\min_{\bbeta} \frac{1}{2n} \|\by - \bX \bbeta\|_2^2 + \lambda \|\bbeta\|_1.
+\end{equation}
+The $\ell_1$ penalty induces sparsity, setting small coefficients exactly to zero.
+Its Bayesian interpretation is a Laplace (double exponential) prior on each $\beta_j$.
+We use 5-fold cross-validation over 100 candidate $\lambda$ values.
+
+\subsubsection{Elastic Net}
+
+The Elastic Net \citep{zou2005regularization} combines both penalties:
+\begin{equation}
+\hat{\bbeta}_{\text{EN}} = \arg\min_{\bbeta} \frac{1}{2n} \|\by - \bX \bbeta\|_2^2 + \lambda \left[\alpha \|\bbeta\|_1 + (1-\alpha) \|\bbeta\|_2^2\right],
+\end{equation}
+where $\alpha \in [0,1]$ controls the mix between $\ell_1$ and $\ell_2$ penalties.
+This encourages sparsity while handling correlated features better than pure Lasso through the grouping effect.
+We select both $\lambda$ and $\alpha$ via 5-fold cross-validation, testing $\alpha \in \{0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1.0\}$.
+
+% ------------------------------------------------------------------
+\subsection{Bayesian Sparse Priors}
+% ------------------------------------------------------------------
+
+Both Bayesian methods use the NUTS sampler \citep{hoffman2014no} as implemented in PyMC \citep{abril2023pymc}, with 2 chains, 1{,}000 warmup iterations, and 2{,}000 posterior draws per chain, with a target acceptance rate of 0.95.
+Point estimates are posterior means; credible intervals are 95\% highest density intervals (HDI) computed via ArviZ \citep{kumar2019arviz}.
+
+\subsubsection{Horseshoe Prior}
+
+The Horseshoe prior \citep{carvalho2010horseshoe} uses a global-local shrinkage hierarchy:
+\begin{align}
+\beta_j \mid \lambda_j, \tau &\sim \Normal(0, \lambda_j^2 \tau^2), \quad j = 1, \ldots, p, \\
+\lambda_j &\sim \HalfCauchy(0, 1), \label{eq:hs_local} \\
+\tau &\sim \HalfCauchy(0, \tau_0), \label{eq:hs_global} \\
+\sigma &\sim \HalfCauchy(0, 2),
+\end{align}
+where $\lambda_j$ is the local shrinkage parameter for coefficient $j$ and $\tau$ is the global shrinkage parameter.
+The half-Cauchy prior on $\lambda_j$ has heavy tails that allow large signals to escape shrinkage while concentrating small signals near zero.
+We set $\tau_0 = 1$ as the scale of the global shrinkage prior.
+
+\subsubsection{Spike-and-Slab Prior}
+
+We use a continuous relaxation of the Spike-and-Slab prior \citep{mitchell1988bayesian} to enable gradient-based NUTS sampling:
+\begin{align}
+\beta_j \mid z_j &\sim z_j \cdot \Normal(0, \sigma_{\text{slab}}^2) + (1 - z_j) \cdot \Normal(0, \sigma_{\text{spike}}^2), \\
+z_j &\sim \text{Bernoulli}(\pi), \\
+\pi &\sim \text{Beta}(1, 1/\pi_0), \\
+\sigma &\sim \HalfCauchy(0, 2),
+\end{align}
+where $\sigma_{\text{slab}} = 5$ is the scale of the ``slab'' component (allowing large coefficients), $\sigma_{\text{spike}} = 0.01$ is the scale of the ``spike'' component (concentrating near zero), and $\pi_0 = 0.2$ is the prior expected inclusion probability.
+The continuous mixture formulation via \texttt{NormalMixture} in PyMC enables efficient NUTS sampling without discrete sampling steps.

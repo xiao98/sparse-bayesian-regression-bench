@@ -38,3 +38,16 @@ wandb/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# LaTeX build artifacts
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.out
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+
+# PyTensor cache
+.pytensorrc

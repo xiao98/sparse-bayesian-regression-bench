@@ -1,0 +1,26 @@
+\section{Related Work}
+\label{sec:related_work}
+
+\paragraph{Classical sparse regression.}
+The Lasso \citep{tibshirani1996regression} introduced $\ell_1$-penalized regression, achieving simultaneous estimation and variable selection.
+Ridge regression \citep{hoerl1970ridge} uses an $\ell_2$ penalty to stabilize estimates under multicollinearity but does not produce exact zeros.
+The Elastic Net \citep{zou2005regularization} combines both penalties, inheriting Lasso's sparsity and Ridge's grouping effect, which is particularly advantageous when features are correlated.
+Theoretical properties of these estimators---oracle inequalities, model selection consistency, and minimax rates---have been extensively studied \citep{buhlmann2011statistics}.
+
+\paragraph{Bayesian sparse priors.}
+The Spike-and-Slab prior \citep{mitchell1988bayesian, george1993variable} is the ``gold standard'' for Bayesian variable selection, placing a point mass (or narrow Gaussian spike) at zero mixed with a diffuse slab.
+Computational challenges with discrete indicators motivated continuous shrinkage priors.
+The Horseshoe prior \citep{carvalho2009handling, carvalho2010horseshoe} uses half-Cauchy local and global shrinkage parameters, achieving near-minimax optimal posterior concentration \citep{vanderpas2014horseshoe}.
+\citet{piironen2017sparsity} introduced the regularized Horseshoe with an informative prior on the number of relevant predictors.
+\citet{bhadra2019lasso} provide a comprehensive survey of global-local shrinkage priors.
+
+\paragraph{Bayesian computation.}
+Modern implementations leverage the No-U-Turn Sampler (NUTS) \citep{hoffman2014no}, an adaptive extension of Hamiltonian Monte Carlo, as implemented in probabilistic programming frameworks such as PyMC \citep{abril2023pymc} and Stan \citep{carpenter2017stan}.
+These tools have made Bayesian sparse regression accessible to practitioners, though computational cost remains a concern at scale.
+
+\paragraph{Existing benchmarks.}
+Several studies compare subsets of these methods.
+\citet{park2008bayesian} compare the Bayesian Lasso to classical Lasso on limited settings.
+\citet{van2019shrinkage} benchmark shrinkage priors but focus on psychological data.
+The BML Horseshoe benchmark\footnote{\url{https://github.com/theosaulus/BML-horseshoe-prior}} compares Horseshoe to Lasso under independent features.
+Our work extends these efforts by systematically varying correlation structure, signal strength, and dimensionality, and by evaluating a broader set of both classical and Bayesian methods with comprehensive metrics including posterior calibration.

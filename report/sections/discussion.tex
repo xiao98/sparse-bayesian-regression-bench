@@ -1,0 +1,34 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Practical Recommendations}
+
+Our benchmark suggests the following guidelines for practitioners:
+
+\begin{itemize}[nosep]
+    \item \textbf{Low correlation, moderate SNR}: Lasso is the best default choice---fast, sparse, and accurate.
+    \item \textbf{High correlation ($\rho > 0.6$)}: Elastic Net or Ridge should be preferred over Lasso, which suffers from unstable variable selection under collinearity.
+    \item \textbf{Uncertainty quantification needed}: The Horseshoe prior provides well-calibrated credible intervals with strong variable selection, justifying its computational premium when posterior inference is the goal.
+    \item \textbf{Large-scale problems}: Classical methods remain the pragmatic choice when $p$ is large or compute is limited; Bayesian methods are viable for $p \lesssim 100$ with current MCMC technology.
+\end{itemize}
+
+\subsection{When Is the Bayesian Cost Justified?}
+
+The Horseshoe prior achieves the best or near-best performance across most metrics but at 10--100$\times$ the computational cost of Lasso.
+We argue this cost is justified when:
+(i)~credible intervals are required for downstream decision-making,
+(ii)~features are highly correlated and variable selection must be robust, or
+(iii)~the problem is low-dimensional enough that MCMC cost is acceptable.
+
+\subsection{Limitations}
+
+Our benchmark has several limitations that suggest directions for future work:
+
+\begin{enumerate}[nosep]
+    \item \textbf{Linear model only.} All methods assume a linear data-generating process. Extensions to generalized linear models or nonparametric settings would broaden applicability.
+    \item \textbf{Fixed sparsity level.} We use 80\% sparsity throughout. Varying sparsity from dense to very sparse would test the adaptivity of each method.
+    \item \textbf{Continuous Spike-and-Slab.} Our implementation uses a continuous relaxation rather than true discrete indicators, which may affect selection sharpness.
+    \item \textbf{No variational methods.} We compare only MCMC-based Bayesian inference. Variational approaches (e.g., automatic relevance determination) offer faster approximate posteriors and would be a natural addition.
+    \item \textbf{Moderate dimensionality.} Our maximum $p = 100$ is moderate by modern standards. Scaling Bayesian methods to $p \gg 100$ remains a computational challenge.
+    \item \textbf{Single real dataset.} The Diabetes dataset has only 10 features. Additional real-world benchmarks with higher dimensionality would strengthen external validity.
+\end{enumerate}

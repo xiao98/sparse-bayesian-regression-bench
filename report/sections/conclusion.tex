@@ -1,0 +1,13 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented a comprehensive, reproducible benchmark comparing six sparse regression methods---OLS, Ridge, Lasso, Elastic Net, Horseshoe, and Spike-and-Slab---across systematically varying correlation structures, signal strengths, and dimensionalities.
+
+Our key findings are:
+(i)~Lasso and Elastic Net offer the best prediction-to-cost ratio under low to moderate correlation;
+(ii)~the Horseshoe prior achieves the most robust variable selection across all conditions and provides well-calibrated posterior intervals;
+(iii)~high feature correlation ($\rho \geq 0.6$) severely degrades Lasso's variable selection while Bayesian methods and Elastic Net maintain robustness;
+and (iv)~Bayesian methods incur an order-of-magnitude computational premium that is justified when uncertainty quantification or robust selection under correlation is required.
+
+All code, configuration, and analysis scripts are publicly available at \url{https://github.com/xiao98/sparse-bayesian-regression-bench} to facilitate reproduction and extension of these results.
+We hope this benchmark provides practitioners with actionable guidance for selecting sparse regression methods suited to their specific data characteristics and computational constraints.

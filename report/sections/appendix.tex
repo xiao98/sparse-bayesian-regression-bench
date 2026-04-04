@@ -1,0 +1,35 @@
+\section{Additional Tables}
+\label{sec:appendix}
+
+\subsection{Correlation Sensitivity}
+
+Table~\ref{tab:corr_sensitivity} shows the mean test MSE for each model at each correlation level, aggregated across all other experimental axes.
+
+\begin{table}[ht]
+\centering
+\caption{Mean test MSE by model and correlation strength $\rho$. Best value per column in bold.}
+\label{tab:corr_sensitivity}
+\input{tables/correlation_sensitivity}
+\end{table}
+
+\subsection{SNR Sensitivity}
+
+Table~\ref{tab:snr_sensitivity} shows the mean support $F_1$ score for each model at each SNR level.
+
+\begin{table}[ht]
+\centering
+\caption{Mean support $F_1$ by model and SNR. Best value per column in bold.}
+\label{tab:snr_sensitivity}
+\input{tables/snr_sensitivity}
+\end{table}
+
+\subsection{Computational Cost by Dimensionality}
+
+Table~\ref{tab:runtime} reports mean fitting time in seconds for each model at each dimensionality level.
+
+\begin{table}[ht]
+\centering
+\caption{Mean fitting time (seconds) by model and dimensionality $p$.}
+\label{tab:runtime}
+\input{tables/runtime}
+\end{table}
