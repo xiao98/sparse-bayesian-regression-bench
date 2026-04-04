@@ -1,8 +1,10 @@
 \begin{abstract}
-Sparse linear regression is fundamental to high-dimensional statistics, yet practitioners face a recurring dilemma: classical penalized methods (Lasso, Ridge, Elastic Net) are fast but lack principled uncertainty quantification, while Bayesian approaches (Horseshoe, Spike-and-Slab priors) provide posterior inference at substantially higher computational cost.
-Existing comparisons typically evaluate these methods in isolation or under idealized conditions.
-We present a comprehensive, reproducible benchmark that systematically compares six sparse regression methods---Ordinary Least Squares, Ridge, Lasso, Elastic Net, Horseshoe, and Spike-and-Slab---across three challenge axes: feature correlation structure (independent, block-diagonal, and Toeplitz designs with $\rho \in \{0, 0.3, 0.6, 0.9\}$), signal strength (SNR $\in \{0.5, 1, 2, 5\}$), and dimensionality ($p \in \{20, 50, 100\}$).
-Over thousands of experiments with five random seeds each, we evaluate prediction accuracy, coefficient estimation error, variable selection performance (precision, recall, $F_1$), and---for Bayesian methods---posterior interval calibration.
-Our results show that (i)~Bayesian methods (Horseshoe, Spike-and-Slab) achieve the lowest prediction error overall (MSE 72--73 vs.\ 108--267 for classical methods), with advantages amplified under high correlation; (ii)~the Horseshoe prior provides well-calibrated 95\% credible intervals (94.8\% empirical coverage), while Spike-and-Slab produces narrower but slightly under-covering intervals (91.9\%); and (iii)~Lasso and Spike-and-Slab lead in variable selection ($F_1 \approx 0.47$), with Lasso offering the best speed-accuracy trade-off among classical methods.
-All code, data generation, and analysis are publicly available at \url{https://github.com/xiao98/sparse-bayesian-regression-bench} to facilitate reproduction and extension.
+Choosing between classical and Bayesian sparse regression methods involves a real trade-off: penalized estimators like Lasso run in milliseconds but give no uncertainty estimates, while Horseshoe and Spike-and-Slab priors produce full posteriors but need MCMC chains that take minutes per fit.
+Surprisingly few studies compare these two families head-to-head under the conditions that actually make sparse regression hard---correlated features, weak signals, and growing dimensionality.
+We benchmark six methods (OLS, Ridge, Lasso, Elastic Net, Horseshoe, Spike-and-Slab) on synthetic data with three covariance structures ($\rho$ up to 0.9), four SNR levels, and $p \in \{20, 50, 100\}$, plus the Diabetes dataset, totalling over 2{,}600 experiments.
+The results are clear on some points and nuanced on others.
+Bayesian methods win on prediction error (MSE 72 vs.\ 108--267), and the Horseshoe delivers near-nominal 95\% coverage (94.8\%).
+But Spike-and-Slab, despite narrower intervals, under-covers at 91.9\%---its continuous relaxation likely plays a role.
+For variable selection, Lasso and Spike-and-Slab tie at $F_1 \approx 0.47$, making Lasso the practical default when posteriors are not needed.
+Code and data are available at \url{https://github.com/xiao98/sparse-bayesian-regression-bench}.
 \end{abstract}

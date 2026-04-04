@@ -3,32 +3,35 @@
 
 \subsection{Practical Recommendations}
 
-Our benchmark suggests the following guidelines for practitioners:
+Based on our results, here is what we would actually recommend:
 
 \begin{itemize}[nosep]
-    \item \textbf{Low correlation, moderate SNR}: Lasso is the best default choice---fast, sparse, and accurate.
-    \item \textbf{High correlation ($\rho > 0.6$)}: Elastic Net or Ridge should be preferred over Lasso, which suffers from unstable variable selection under collinearity.
-    \item \textbf{Uncertainty quantification needed}: The Horseshoe prior provides well-calibrated credible intervals with strong variable selection, justifying its computational premium when posterior inference is the goal.
-    \item \textbf{Large-scale problems}: Classical methods remain the pragmatic choice when $p$ is large or compute is limited; Bayesian methods are viable for $p \lesssim 100$ with current MCMC technology.
+    \item \textbf{Default choice}: Lasso. Fast, sparse, good $F_1$. Hard to go wrong with it when features are not too correlated.
+    \item \textbf{Correlated features ($\rho > 0.6$)}: Switch to Elastic Net or Ridge. Lasso's selection becomes unreliable under strong collinearity; the $\ell_2$ component stabilizes things.
+    \item \textbf{Need credible intervals}: Use Horseshoe. Its coverage is well-calibrated and its prediction accuracy is the best we tested. The compute cost is real, but for problems with $p \lesssim 100$ it is manageable.
+    \item \textbf{Spike-and-Slab}: Good variable selection, but the continuous relaxation hurts calibration. Worth considering if selection is the primary goal and you can live without tight interval coverage.
 \end{itemize}
 
-\subsection{When Is the Bayesian Cost Justified?}
+\subsection{Is the Bayesian Premium Worth It?}
 
-The Horseshoe prior achieves the best or near-best performance across most metrics but at 10--100$\times$ the computational cost of Lasso.
-We argue this cost is justified when:
-(i)~credible intervals are required for downstream decision-making,
-(ii)~features are highly correlated and variable selection must be robust, or
-(iii)~the problem is low-dimensional enough that MCMC cost is acceptable.
+It depends on what you are buying.
+For pure prediction, the Horseshoe's 35\% MSE improvement over Lasso is substantial---but it comes at 100$\times$ the compute.
+If your pipeline runs overnight anyway, that is free.
+If you need results in milliseconds (online prediction, large-scale screening), it is a non-starter.
+
+The real case for Bayesian methods is when you need to \emph{trust} your uncertainty estimates---clinical trials, policy decisions, scientific discovery.
+Our results show the Horseshoe delivers on that promise.
+Spike-and-Slab, at least in its continuous form, does not quite.
 
 \subsection{Limitations}
 
-Our benchmark has several limitations that suggest directions for future work:
+We want to be upfront about what this benchmark does not cover:
 
 \begin{enumerate}[nosep]
-    \item \textbf{Linear model only.} All methods assume a linear data-generating process. Extensions to generalized linear models or nonparametric settings would broaden applicability.
-    \item \textbf{Fixed sparsity level.} We use 80\% sparsity throughout. Varying sparsity from dense to very sparse would test the adaptivity of each method.
-    \item \textbf{Continuous Spike-and-Slab.} Our implementation uses a continuous relaxation rather than true discrete indicators, which may affect selection sharpness.
-    \item \textbf{No variational methods.} We compare only MCMC-based Bayesian inference. Variational approaches (e.g., automatic relevance determination) offer faster approximate posteriors and would be a natural addition.
-    \item \textbf{Moderate dimensionality.} Our maximum $p = 100$ is moderate by modern standards. Scaling Bayesian methods to $p \gg 100$ remains a computational challenge.
-    \item \textbf{Single real dataset.} The Diabetes dataset has only 10 features. Additional real-world benchmarks with higher dimensionality would strengthen external validity.
+    \item \textbf{Linear models only.} Generalized linear models, nonparametric alternatives, and deep learning approaches are out of scope.
+    \item \textbf{Fixed 80\% sparsity.} We did not vary the sparsity level. Very sparse or near-dense regimes may shift the rankings.
+    \item \textbf{Continuous Spike-and-Slab.} The \texttt{NormalMixture} relaxation is convenient for NUTS but introduces approximation error. A proper Gibbs sampler with discrete indicators would be a fairer test.
+    \item \textbf{No variational inference.} Variational Bayes and expectation propagation could offer a middle ground between MCMC and point estimates.
+    \item \textbf{Moderate dimensions.} We stop at $p = 100$. Modern genomics or text problems have $p$ in the thousands or millions, where MCMC-based approaches are currently impractical.
+    \item \textbf{One real dataset.} The Diabetes data has only 10 features and does not discriminate among methods. More challenging real-world benchmarks would be valuable.
 \end{enumerate}

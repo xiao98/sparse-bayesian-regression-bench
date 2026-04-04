@@ -1,31 +1,32 @@
 \section{Results}
 \label{sec:results}
 
-We organize our findings around five research questions: prediction accuracy, robustness to correlation, variable selection, uncertainty quantification, and computational cost.
-All reported values are means $\pm$ standard deviations across five random seeds unless otherwise noted.
+All values below are means $\pm$ standard deviations across random seeds unless stated otherwise.
 
 % ------------------------------------------------------------------
 \subsection{Overall Prediction Accuracy}
 \label{sec:results_prediction}
 
-Table~\ref{tab:grand_summary} presents the aggregate performance of each method across all synthetic conditions.
+Table~\ref{tab:grand_summary} gives the big picture.
+The two Bayesian methods lead on prediction error (MSE around 72), roughly 35\% lower than Lasso and Elastic Net (around 108), and far ahead of OLS (267).
+Ridge lands in the middle at 119.
 
 \begin{table}[ht]
 \centering
-\caption{Grand summary of method performance across all synthetic experiments. Best values per metric are in bold.}
+\caption{Aggregate performance across all synthetic experiments.}
 \label{tab:grand_summary}
 \input{tables/grand_summary}
 \end{table}
 
-Figure~\ref{fig:mse_vs_snr} shows how test MSE varies with signal strength across the three covariance designs.
-All methods improve with increasing SNR, but the rate of improvement varies.
-Regularized methods (Lasso, Elastic Net, Ridge) consistently outperform OLS, with the gap widening under weak signals (SNR $\leq 1$).
-Bayesian methods perform comparably to Elastic Net at high SNR and show advantages at low SNR due to adaptive shrinkage.
+Figure~\ref{fig:mse_vs_snr} breaks this down by dataset and SNR.
+At high SNR ($\geq 5$), most regularized methods converge to similar MSE levels.
+The differences emerge at low SNR, where the adaptive shrinkage of Bayesian priors---especially Horseshoe---pays off.
+OLS is consistently the worst, as expected for an unregularized estimator.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{figures/lineplot_mse_vs_snr_by_dataset.pdf}
-\caption{Test MSE vs.\ signal-to-noise ratio for each covariance design. Error bars show $\pm 1$ standard deviation across seeds.}
+\caption{Test MSE vs.\ SNR for each covariance design. Error bars: $\pm 1$ std across seeds.}
 \label{fig:mse_vs_snr}
 \end{figure}
 
@@ -33,27 +34,27 @@ Bayesian methods perform comparably to Elastic Net at high SNR and show advantag
 \subsection{Robustness to Feature Correlation}
 \label{sec:results_correlation}
 
-Figure~\ref{fig:mse_vs_corr} reveals how prediction accuracy degrades as correlation strength $\rho$ increases.
+Figure~\ref{fig:mse_vs_corr} is perhaps the most practically relevant plot in this paper.
+It shows what happens to each method as you crank up the feature correlation.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{figures/lineplot_mse_vs_correlation.pdf}
-\caption{Test MSE degradation with increasing feature correlation. Left: Block Correlated design. Right: Toeplitz design.}
+\caption{MSE degradation with increasing $\rho$. Left: Block Correlated. Right: Toeplitz.}
 \label{fig:mse_vs_corr}
 \end{figure}
 
-Under the Block Correlated design, OLS degrades most rapidly, while Ridge and Elastic Net maintain relatively stable performance due to their $\ell_2$ component.
-Lasso's performance deteriorates at $\rho \geq 0.6$ as correlated features disrupt its variable selection.
-The Horseshoe prior shows the most graceful degradation, benefiting from its adaptive local-global shrinkage structure.
+OLS falls apart first---its MSE climbs steeply beyond $\rho = 0.3$.
+Ridge and Elastic Net hold up reasonably well thanks to their $\ell_2$ component.
+Lasso degrades noticeably at $\rho \geq 0.6$: correlated features confuse its variable selection, and the resulting coefficient instability hurts prediction.
+The Horseshoe prior is the most robust here, with its local-global shrinkage adapting to the correlation structure.
 
-The Toeplitz design produces a similar pattern but with generally smoother degradation due to the gradual decay of correlations.
-
-Figure~\ref{fig:mse_heatmap} provides a complementary view as a heatmap.
+The Toeplitz design tells a similar story but with a smoother degradation curve, since correlations decay with distance between features rather than cutting off at block boundaries.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/heatmap_mse_vs_correlation.pdf}
-\caption{Average test MSE heatmap by model and correlation strength.}
+\caption{MSE heatmap: model $\times$ correlation strength.}
 \label{fig:mse_heatmap}
 \end{figure}
 
@@ -61,20 +62,20 @@ Figure~\ref{fig:mse_heatmap} provides a complementary view as a heatmap.
 \subsection{Variable Selection}
 \label{sec:results_selection}
 
-Figure~\ref{fig:f1_vs_snr} shows variable selection $F_1$ score as a function of SNR.
+Figure~\ref{fig:f1_vs_snr} shows $F_1$ scores for support recovery.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/lineplot_f1_vs_snr.pdf}
-\caption{Support recovery $F_1$ score vs.\ SNR. Higher is better.}
+\caption{Support recovery $F_1$ vs.\ SNR.}
 \label{fig:f1_vs_snr}
 \end{figure}
 
-At low SNR ($\leq 1$), all methods struggle with variable selection ($F_1 < 0.5$).
-As signal strength increases, Lasso, Elastic Net, and the Bayesian methods rapidly improve.
-OLS and Ridge achieve high recall but low precision, as they assign nonzero values to nearly all coefficients.
-
-Figure~\ref{fig:l2_heatmap} shows how coefficient estimation error scales with dimensionality.
+Two methods stand out: Lasso and Spike-and-Slab, both reaching $F_1 \approx 0.47$ on average.
+Elastic Net is close behind.
+OLS and Ridge are stuck around $F_1 = 0.30$ because they assign nonzero weights to almost every feature (high recall, low precision).
+The Horseshoe, despite its strong prediction performance, is surprisingly mediocre at hard thresholding---its posterior means are shrunken but rarely exactly zero, so the $|\hat{\beta}_j| > 0.01$ threshold does not serve it well.
+A more Bayesian selection rule (e.g., based on credible intervals excluding zero) would likely improve its $F_1$.
 
 \begin{figure}[ht]
 \centering
@@ -83,30 +84,34 @@ Figure~\ref{fig:l2_heatmap} shows how coefficient estimation error scales with d
 \label{fig:l2_heatmap}
 \end{figure}
 
-All methods show increasing $L_2$ error with dimensionality, but sparse methods (Lasso, Horseshoe) scale more favorably than non-sparse ones (OLS, Ridge).
+On raw coefficient estimation (Figure~\ref{fig:l2_heatmap}), the story favors Bayesian methods more clearly: Horseshoe achieves the lowest $L_2$ error at every dimensionality, followed by Spike-and-Slab and Lasso.
 
 % ------------------------------------------------------------------
 \subsection{Uncertainty Quantification}
 \label{sec:results_uq}
 
-A key advantage of Bayesian methods is posterior uncertainty quantification.
-When Bayesian models (Horseshoe, Spike-and-Slab) are included in the benchmark, we evaluate 95\% HDI coverage and interval width.
+This is where the Bayesian methods earn their computational cost---or not.
 
 \IfFileExists{figures/barchart_coverage.pdf}{%
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.45\textwidth]{figures/barchart_coverage.pdf}
-\caption{Empirical 95\% posterior interval coverage. The dashed red line marks the nominal 95\% level.}
+\caption{Empirical 95\% HDI coverage. Dashed red line: nominal level.}
 \label{fig:coverage}
 \end{figure}
-
-The Horseshoe prior tends to produce well-calibrated intervals with coverage close to 95\%.
-The Spike-and-Slab, by contrast, sometimes exhibits higher coverage due to wider intervals---a consequence of the bimodal spike-slab mixture spreading posterior mass.
 }{}
+
+Table~\ref{tab:bayesian_uq} summarizes the calibration results.
+The Horseshoe achieves 94.8\% coverage, close to the nominal 95\%---a good result that validates its posterior as trustworthy.
+Its intervals are wider on average (2.24), which is the price of honesty: the prior spreads mass conservatively.
+
+Spike-and-Slab, by contrast, under-covers at 91.9\% despite producing narrower intervals (1.06).
+We suspect the continuous relaxation is the culprit: the \texttt{NormalMixture} approximation blurs the sharp spike-slab boundary, leading to posteriors that are sometimes too concentrated around the wrong value.
+A discrete Gibbs sampler implementation might close this gap, but at further computational cost.
 
 \begin{table}[ht]
 \centering
-\caption{Bayesian uncertainty quantification: coverage and interval width.}
+\caption{Bayesian posterior calibration: coverage and interval width.}
 \label{tab:bayesian_uq}
 \input{tables/bayesian_uq}
 \end{table}
@@ -115,46 +120,42 @@ The Spike-and-Slab, by contrast, sometimes exhibits higher coverage due to wider
 \subsection{Computational Cost}
 \label{sec:results_runtime}
 
-Figure~\ref{fig:runtime} compares the average fitting time across methods.
-
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.6\textwidth]{figures/barchart_runtime.pdf}
-\caption{Mean fitting time per experiment (log scale).}
+\caption{Mean fit time per experiment (log scale).}
 \label{fig:runtime}
 \end{figure}
 
-Classical methods (OLS, Ridge, Lasso, Elastic Net) fit in under one second even at $p = 100$.
-Bayesian methods require 10--100$\times$ more time due to MCMC sampling, with cost scaling superlinearly with dimensionality.
+The cost gap is stark (Figure~\ref{fig:runtime}).
+Classical methods fit in well under one second at all tested dimensions.
+Bayesian methods take tens of seconds at $p = 20$ and minutes at $p = 50$, with Spike-and-Slab consistently slower than Horseshoe due to the mixture model's more complex geometry.
 
 % ------------------------------------------------------------------
 \subsection{Seed Stability}
 \label{sec:results_stability}
 
-Figure~\ref{fig:seed_stability} shows the distribution of test MSE across the five random seeds.
-
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/boxplot_seed_stability.pdf}
-\caption{Test MSE distribution across random seeds. Wider boxes indicate higher variability.}
+\caption{Test MSE spread across random seeds.}
 \label{fig:seed_stability}
 \end{figure}
 
-Classical methods exhibit low seed-to-seed variability due to deterministic optimization (given fixed data).
-Bayesian methods show moderately higher variability from MCMC stochasticity, though this is mitigated by using 2{,}000 posterior draws.
+Classical methods are nearly deterministic given fixed data (Figure~\ref{fig:seed_stability}).
+Bayesian methods show wider boxes due to MCMC randomness, but the spread is modest---not a practical concern with 1{,}000+ posterior draws.
 
 % ------------------------------------------------------------------
 \subsection{Real Data: Diabetes}
 \label{sec:results_diabetes}
 
-Table~\ref{tab:diabetes} reports results on the Diabetes dataset.
-
 \begin{table}[ht]
 \centering
-\caption{Results on the Diabetes dataset ($n=442$, $p=10$).}
+\caption{Diabetes dataset ($n=442$, $p=10$).}
 \label{tab:diabetes}
 \input{tables/diabetes}
 \end{table}
 
-With only 10 features and a moderate sample size, differences among methods are smaller than in synthetic settings.
-Regularized methods slightly outperform OLS, while Bayesian methods achieve comparable prediction accuracy at higher computational cost.
+With only 10 features and ample samples, the Diabetes dataset does not stress any method.
+All regularized approaches perform similarly (MSE $\approx 0.50$), and even OLS is competitive.
+This confirms that the interesting differences emerge under harder conditions---higher $p$, stronger correlation, weaker signal.

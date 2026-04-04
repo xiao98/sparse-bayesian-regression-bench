@@ -1,13 +1,12 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented a comprehensive, reproducible benchmark comparing six sparse regression methods---OLS, Ridge, Lasso, Elastic Net, Horseshoe, and Spike-and-Slab---across systematically varying correlation structures, signal strengths, and dimensionalities.
+We benchmarked six sparse regression methods across 2{,}600+ experiments, varying correlation, signal strength, and dimensionality.
+Three findings stand out.
 
-Our key findings are:
-(i)~Lasso and Elastic Net offer the best prediction-to-cost ratio under low to moderate correlation;
-(ii)~the Horseshoe prior achieves the most robust variable selection across all conditions and provides well-calibrated posterior intervals;
-(iii)~high feature correlation ($\rho \geq 0.6$) severely degrades Lasso's variable selection while Bayesian methods and Elastic Net maintain robustness;
-and (iv)~Bayesian methods incur an order-of-magnitude computational premium that is justified when uncertainty quantification or robust selection under correlation is required.
+First, Bayesian methods---Horseshoe in particular---predict better than classical penalized methods, and the gap grows under challenging conditions (high $\rho$, low SNR).
+Second, the Horseshoe prior produces trustworthy 95\% intervals (94.8\% empirical coverage), while the continuous Spike-and-Slab approximation falls short at 91.9\%.
+Third, when posteriors are not needed, Lasso remains the practical default: it matches Spike-and-Slab on variable selection at a fraction of the compute.
 
-All code, configuration, and analysis scripts are publicly available at \url{https://github.com/xiao98/sparse-bayesian-regression-bench} to facilitate reproduction and extension of these results.
-We hope this benchmark provides practitioners with actionable guidance for selecting sparse regression methods suited to their specific data characteristics and computational constraints.
+The code is at \url{https://github.com/xiao98/sparse-bayesian-regression-bench}.
+We think extending this benchmark to higher dimensions, discrete Spike-and-Slab sampling, and variational methods would be natural next steps.

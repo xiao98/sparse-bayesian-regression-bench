@@ -1,37 +1,40 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Sparse linear regression---recovering a small set of relevant predictors from a potentially large feature space---is a cornerstone of modern statistics and machine learning.
-Applications span genomics \citep{tibshirani1996regression}, signal processing, economics, and scientific discovery, where identifying the true support of the coefficient vector $\bbeta$ is often as important as prediction accuracy.
+Sparse linear regression---finding the few predictors that actually matter in a potentially large feature space---comes up everywhere: genomics \citep{tibshirani1996regression}, signal processing, economics, neuroscience.
+In many of these fields, knowing \emph{which} variables are active matters as much as getting the prediction right.
 
-\paragraph{The practitioner's dilemma.}
-Two broad families of methods compete for this task.
-Classical penalized estimators---Lasso \citep{tibshirani1996regression}, Ridge \citep{hoerl1970ridge}, and Elastic Net \citep{zou2005regularization}---solve convex optimization problems and scale effortlessly to large datasets, but they provide only point estimates with no principled uncertainty quantification.
-Bayesian sparse priors---notably the Horseshoe \citep{carvalho2010horseshoe} and Spike-and-Slab \citep{mitchell1988bayesian}---yield full posterior distributions over coefficients, enabling credible intervals and probabilistic variable selection, but require Markov chain Monte Carlo (MCMC) sampling that is orders of magnitude slower.
+\paragraph{Two camps, one problem.}
+Practitioners typically reach for one of two toolboxes.
+Penalized methods---Lasso \citep{tibshirani1996regression}, Ridge \citep{hoerl1970ridge}, Elastic Net \citep{zou2005regularization}---are fast and well-understood, but they output point estimates only.
+If you need error bars on your coefficients, you are out of luck.
+Bayesian priors like the Horseshoe \citep{carvalho2010horseshoe} and Spike-and-Slab \citep{mitchell1988bayesian} give you full posteriors, credible intervals, and a principled inclusion probability---at the cost of MCMC sampling that can be orders of magnitude slower.
 
-\paragraph{The gap.}
-Despite extensive individual studies of each method, the literature lacks a \emph{systematic, multi-axis} comparison that simultaneously varies:
+\paragraph{What is missing.}
+Both camps have been studied extensively in isolation.
+But when a practitioner asks ``should I use Lasso or Horseshoe for \emph{my} problem?'', the existing literature is surprisingly unhelpful.
+Most comparisons fix the correlation structure (usually independent features), test at one or two SNR levels, and skip the calibration question entirely.
+Real data is rarely that clean: features are correlated, signals can be weak, and dimensions vary.
+
+\paragraph{What we do.}
+We run a large-scale benchmark that varies \emph{all three axes simultaneously}:
 \begin{enumerate}[nosep]
-    \item \textbf{Correlation structure} among features (independent, block-diagonal, autoregressive),
-    \item \textbf{Signal strength} (signal-to-noise ratio from very weak to strong),
-    \item \textbf{Dimensionality} (from moderate to moderately high), and
-    \item \textbf{Evaluation criteria} (prediction, estimation, selection, and calibration).
+    \item \textbf{Correlation}: independent, block-diagonal, and Toeplitz designs with $\rho$ from 0 to 0.9;
+    \item \textbf{Signal strength}: SNR from 0.5 (buried in noise) to 5 (clearly visible);
+    \item \textbf{Dimensionality}: $p \in \{20, 50, 100\}$.
 \end{enumerate}
-Existing benchmarks typically fix one or two of these axes and focus on a subset of methods, making it difficult for practitioners to choose the right tool for their specific setting.
+We test six methods across this grid with five seeds each, evaluating prediction (MSE), estimation ($L_2$ error), selection ($F_1$), and---for Bayesian methods---posterior calibration (coverage and interval width).
+The result is over 2{,}600 experiments, all reproducible from a single codebase.\footnote{\url{https://github.com/xiao98/sparse-bayesian-regression-bench}}
 
-\paragraph{Contributions.}
-This paper presents a reproducible benchmark addressing this gap. Our contributions are:
-\begin{enumerate}[nosep]
-    \item A \textbf{benchmark suite} comparing six methods (OLS, Ridge, Lasso, Elastic Net, Horseshoe, Spike-and-Slab) across three synthetic covariance designs, four SNR levels, three dimensionalities, and one real dataset, totalling thousands of experiments.
-    \item \textbf{Empirical findings} on how each method's prediction accuracy, coefficient estimation, and variable selection degrade under increasing correlation and decreasing signal strength.
-    \item A \textbf{calibration analysis} of Bayesian posterior intervals, evaluating whether nominal 95\% credible intervals achieve their advertised coverage.
-    \item \textbf{Fully reproducible code}\footnote{\url{https://github.com/xiao98/sparse-bayesian-regression-bench}} with deterministic seeding, CSV-based result persistence, and automated figure and table generation.
-\end{enumerate}
+\paragraph{Main takeaways.}
+\begin{itemize}[nosep]
+    \item Bayesian methods predict better overall, and the gap widens under high correlation.
+    \item Horseshoe intervals are well-calibrated; Spike-and-Slab's continuous relaxation leads to slight under-coverage.
+    \item When you do not need posteriors, Lasso remains hard to beat for speed and selection quality.
+    \item High correlation ($\rho > 0.6$) breaks Lasso's variable selection; Elastic Net and Bayesian methods are more robust.
+\end{itemize}
 
-\paragraph{Paper outline.}
-Section~\ref{sec:related_work} reviews related work.
-Section~\ref{sec:methods} describes the six methods.
-Section~\ref{sec:experimental_setup} details the experimental design.
-Section~\ref{sec:results} presents results.
-Section~\ref{sec:discussion} discusses practical implications and limitations.
-Section~\ref{sec:conclusion} concludes.
+\paragraph{Outline.}
+Section~\ref{sec:related_work} covers related work.
+Sections~\ref{sec:methods}--\ref{sec:experimental_setup} describe the methods and setup.
+Section~\ref{sec:results} presents results, and Section~\ref{sec:discussion} discusses practical implications.
